@@ -1,0 +1,19 @@
+# Elastic Beanstalk ignore file
+.git
+.gitignore
+*.pyc
+__pycache__
+.venv
+venv
+env
+.env
+.vscode
+.idea
+*.sqlite3
+db.sqlite3
+staticfiles
+.coverage
+htmlcov
+.pytest_cache
+*.log
+.DS_Store
