@@ -5,6 +5,7 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,7 +18,7 @@ load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-me-in-production')
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 INSTALLED_APPS = [
     'daphne',
@@ -75,15 +76,22 @@ CHANNEL_LAYERS = {
     }
 }
 
+# Local SQLite Database (commented out - switch back if needed)
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
+#         conn_max_age=600,
+#         conn_health_checks=True,
+#     )
+# }
+
+# Neon PostgreSQL Database (production)
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', ''),
-    }
+    'default': dj_database_url.config(
+        default='postgresql://neondb_owner:npg_h0wAmxEVXWB7@ep-silent-meadow-aiwqbco6-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [

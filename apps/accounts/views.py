@@ -64,17 +64,23 @@ class CodeLoginView(APIView):
         }
     )
     def post(self, request, *args, **kwargs):
-        serializer = CodeLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        player = serializer.save()
-        refresh = RefreshToken.for_user(player)
-        return response.Response(
-            {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'player': PlayerProfileSerializer(player).data,
-            }
-        )
+        try:
+            serializer = CodeLoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            player = serializer.save()
+            refresh = RefreshToken.for_user(player)
+            return response.Response(
+                {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'player': PlayerProfileSerializer(player).data,
+                }
+            )
+        except Exception as e:
+            return response.Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ProfileView(generics.RetrieveAPIView):
