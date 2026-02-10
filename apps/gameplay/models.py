@@ -2,6 +2,12 @@
 from django.db import models
 from django.conf import settings
 
+# Game types for answer tracking
+class GameType(models.TextChoices):
+    DRAG_DROP = 'drag_drop', 'Drag & Drop Game'
+    BEER_CUP = 'beer_cup', 'Beer Cup Game'
+    JIGSAW = 'jigsaw', 'Jigsaw Puzzle Game'
+
 # Challenge model for managing quiz challenges
 class Challenge(models.Model):
     name = models.CharField(max_length=120)
@@ -45,3 +51,65 @@ class QuizResult(models.Model):
         if self.player_id and self.player:
             return self.player.name
         return self.display_name or 'Guest'
+
+
+class GameAnswer(models.Model):
+    """Model to track individual answers from game challenges"""
+    player = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='game_answers',
+    )
+    game_type = models.CharField(
+        max_length=20,
+        choices=GameType.choices,
+    )
+    question_id = models.IntegerField(help_text="Question ID from the game")
+    question_text = models.TextField(blank=True, help_text="The question text for reference")
+    selected_answer = models.TextField(help_text="The answer selected by the player")
+    correct_answer = models.TextField(blank=True, help_text="The correct answer for reference")
+    is_correct = models.BooleanField()
+    time_taken_seconds = models.FloatField(default=0.0, help_text="Time taken to answer in seconds")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['player', 'game_type']),
+            models.Index(fields=['game_type', 'created_at']),
+        ]
+
+    def __str__(self):
+        status = "✓" if self.is_correct else "✗"
+        return f"{self.player} - {self.game_type} Q{self.question_id} {status}"
+
+
+class GameSession(models.Model):
+    """Model to track a complete game session"""
+    player = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='game_sessions',
+    )
+    game_type = models.CharField(
+        max_length=20,
+        choices=GameType.choices,
+    )
+    total_questions = models.PositiveSmallIntegerField()
+    correct_answers = models.PositiveSmallIntegerField()
+    total_time_seconds = models.FloatField(default=0.0)
+    completed = models.BooleanField(default=False)
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f"{self.player} - {self.game_type} ({self.correct_answers}/{self.total_questions})"
+
+    @property
+    def score_percentage(self):
+        if self.total_questions == 0:
+            return 0
+        return round((self.correct_answers / self.total_questions) * 100, 2)
