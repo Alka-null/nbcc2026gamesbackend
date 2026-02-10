@@ -113,3 +113,27 @@ class GameSession(models.Model):
         if self.total_questions == 0:
             return 0
         return round((self.correct_answers / self.total_questions) * 100, 2)
+
+
+class UserFeedback(models.Model):
+    """Model to store user feedback from the event"""
+    player = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='feedbacks',
+    )
+    unique_code = models.CharField(max_length=50, help_text="Player's unique code")
+    what_works = models.TextField(blank=True, help_text="What worked well for the user")
+    what_is_confusing = models.TextField(blank=True, help_text="What was confusing or unclear")
+    what_can_be_better = models.TextField(blank=True, help_text="Suggestions for improvement")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'User Feedback'
+        verbose_name_plural = 'User Feedbacks'
+    
+    def __str__(self):
+        return f"Feedback from {self.unique_code} at {self.created_at.strftime('%Y-%m-%d %H:%M')}"
