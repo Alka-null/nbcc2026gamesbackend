@@ -51,6 +51,9 @@ class GameSessionSerializer(serializers.Serializer):
     correct_answers = serializers.IntegerField()
     total_time_seconds = serializers.FloatField(required=False, default=0.0)
 
+    class Meta:
+        ref_name = "GameAnswerGameSessionSerializer"
+
 
 class GameSessionResponseSerializer(serializers.Serializer):
     """Response serializer for game session"""
@@ -58,6 +61,9 @@ class GameSessionResponseSerializer(serializers.Serializer):
     message = serializers.CharField()
     session_id = serializers.IntegerField(required=False)
     score_percentage = serializers.FloatField(required=False)
+
+    class Meta:
+        ref_name = "GameAnswerGameSessionResponseSerializer"
 
 
 # API Views

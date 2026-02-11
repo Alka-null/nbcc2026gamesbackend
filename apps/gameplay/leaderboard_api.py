@@ -82,6 +82,9 @@ class StartChallengeAPIView(APIView):
 class GameSessionSerializer(serializers.Serializer):
     unique_code = serializers.CharField(max_length=12)
 
+    class Meta:
+        ref_name = "LeaderboardGameSessionSerializer"
+
 class GameSessionResponseSerializer(serializers.Serializer):
     challenge_id = serializers.IntegerField()
     challenge_name = serializers.CharField()
@@ -89,6 +92,9 @@ class GameSessionResponseSerializer(serializers.Serializer):
     total_answered = serializers.IntegerField()
     total_correct = serializers.IntegerField()
     total_failed = serializers.IntegerField()
+
+    class Meta:
+        ref_name = "LeaderboardGameSessionResponseSerializer"
 
 class GameSessionAPIView(APIView):
     permission_classes = [permissions.AllowAny]
