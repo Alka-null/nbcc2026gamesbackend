@@ -24,13 +24,7 @@ class SubmitFeedbackAPIView(APIView):
     
     def post(self, request):
         data = request.data
-        unique_code = data.get('unique_code')
-        
-        if not unique_code:
-            return Response(
-                {'error': 'unique_code is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        unique_code = data.get('unique_code', '').strip() or 'anonymous'
         
         # Try to find the player by unique_code
         player = None
@@ -43,6 +37,8 @@ class SubmitFeedbackAPIView(APIView):
         feedback = UserFeedback.objects.create(
             player=player,
             unique_code=unique_code,
+            full_name=data.get('full_name', ''),
+            cluster_sales_area=data.get('cluster_sales_area', ''),
             what_works=data.get('what_works', ''),
             what_is_confusing=data.get('what_is_confusing', ''),
             what_can_be_better=data.get('what_can_be_better', ''),
@@ -71,6 +67,8 @@ class GetFeedbackStatsAPIView(APIView):
         for feedback in UserFeedback.objects.all()[:20]:
             recent_feedbacks.append({
                 'unique_code': feedback.unique_code,
+                'full_name': feedback.full_name,
+                'cluster_sales_area': feedback.cluster_sales_area,
                 'what_works': feedback.what_works[:100] + '...' if len(feedback.what_works) > 100 else feedback.what_works,
                 'what_is_confusing': feedback.what_is_confusing[:100] + '...' if len(feedback.what_is_confusing) > 100 else feedback.what_is_confusing,
                 'what_can_be_better': feedback.what_can_be_better[:100] + '...' if len(feedback.what_can_be_better) > 100 else feedback.what_can_be_better,
