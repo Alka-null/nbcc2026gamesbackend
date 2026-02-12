@@ -45,7 +45,7 @@ class UserFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     fieldsets = (
         ('Player Info', {
-            'fields': ('full_name', 'cluster_sales_area', 'unique_code', 'player')
+            'fields': ('full_name', 'cluster_sales_area', 'digital_sales_tool', 'unique_code', 'player')
         }),
         ('Feedback', {
             'fields': ('what_works', 'what_is_confusing', 'what_can_be_better')

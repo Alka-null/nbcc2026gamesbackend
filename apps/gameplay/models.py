@@ -127,6 +127,7 @@ class UserFeedback(models.Model):
     unique_code = models.CharField(max_length=50, help_text="Player's unique code")
     full_name = models.CharField(max_length=200, blank=True, default='', help_text="Player's full name")
     cluster_sales_area = models.CharField(max_length=200, blank=True, default='', help_text="Player's cluster or sales area")
+    digital_sales_tool = models.CharField(max_length=100, blank=True, null=True, default='', help_text="Selected digital sales tool")
     what_works = models.TextField(blank=True, help_text="What worked well for the user")
     what_is_confusing = models.TextField(blank=True, help_text="What was confusing or unclear")
     what_can_be_better = models.TextField(blank=True, help_text="Suggestions for improvement")
