@@ -61,19 +61,24 @@ class GetAllFeedbacksAPIView(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        feedbacks = UserFeedback.objects.all()
+        feedbacks = UserFeedback.objects.select_related('player').all()
         
         results = []
         for fb in feedbacks:
+            # Fallback to player.name if full_name is empty
+            name = fb.full_name
+            if not name and fb.player:
+                name = fb.player.name or ''
+            
             results.append({
                 'id': fb.id,
                 'unique_code': fb.unique_code,
-                'full_name': fb.full_name,
-                'cluster_sales_area': fb.cluster_sales_area,
-                'digital_sales_tool': fb.digital_sales_tool,
-                'what_works': fb.what_works,
-                'what_is_confusing': fb.what_is_confusing,
-                'what_can_be_better': fb.what_can_be_better,
+                'full_name': name,
+                'cluster_sales_area': fb.cluster_sales_area or '',
+                'digital_sales_tool': fb.digital_sales_tool or '',
+                'what_works': fb.what_works or '',
+                'what_is_confusing': fb.what_is_confusing or '',
+                'what_can_be_better': fb.what_can_be_better or '',
                 'created_at': fb.created_at.isoformat(),
             })
         
