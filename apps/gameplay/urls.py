@@ -10,7 +10,7 @@ from .game_answer_api import (
     SaveGameSessionAPIView,
     GetPlayerGameStatsAPIView,
 )
-from .feedback_api import SubmitFeedbackAPIView, GetFeedbackStatsAPIView
+from .feedback_api import SubmitFeedbackAPIView, GetFeedbackStatsAPIView, GetAllFeedbacksAPIView
 
 urlpatterns = [
     path('quiz_questions/', QuizQuestionsAPIView.as_view(), name='quiz_questions_api'),
@@ -31,4 +31,5 @@ urlpatterns = [
     # Feedback endpoints
     path('feedback/', SubmitFeedbackAPIView.as_view(), name='submit_feedback'),
     path('feedback/stats/', GetFeedbackStatsAPIView.as_view(), name='feedback_stats'),
+    path('feedback/all/', GetAllFeedbacksAPIView.as_view(), name='all_feedbacks'),
 ]

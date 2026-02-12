@@ -51,6 +51,36 @@ class SubmitFeedbackAPIView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+class GetAllFeedbacksAPIView(APIView):
+    """
+    API endpoint to list all user feedbacks (admin use)
+    
+    GET /api/gameplay/feedback/all/
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        feedbacks = UserFeedback.objects.all()
+        
+        results = []
+        for fb in feedbacks:
+            results.append({
+                'id': fb.id,
+                'unique_code': fb.unique_code,
+                'full_name': fb.full_name,
+                'cluster_sales_area': fb.cluster_sales_area,
+                'what_works': fb.what_works,
+                'what_is_confusing': fb.what_is_confusing,
+                'what_can_be_better': fb.what_can_be_better,
+                'created_at': fb.created_at.isoformat(),
+            })
+        
+        return Response({
+            'count': len(results),
+            'feedbacks': results,
+        })
+
+
 class GetFeedbackStatsAPIView(APIView):
     """
     API endpoint to get feedback statistics (admin use)
