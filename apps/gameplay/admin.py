@@ -22,11 +22,41 @@ class GameAnswerAdmin(admin.ModelAdmin):
 
 @admin.register(GameSession)
 class GameSessionAdmin(admin.ModelAdmin):
-    list_display = ('player', 'game_type', 'correct_answers', 'total_questions', 'score_percentage', 'completed', 'started_at')
+    list_display = ('player', 'game_type', 'correct_answers', 'total_questions', 'score_percentage',
+                    'is_correct', 'set_a_score', 'set_a_total', 'set_b_score', 'set_b_total',
+                    'completed', 'started_at')
     search_fields = ('player__name', 'player__email')
-    list_filter = ('game_type', 'completed', 'started_at')
+    list_filter = ('game_type', 'completed', 'is_correct', 'started_at')
     ordering = ('-started_at',)
-    readonly_fields = ('started_at', 'score_percentage')
+    readonly_fields = ('started_at', 'score_percentage', 'formatted_answers_data')
+
+    fieldsets = (
+        ('Player & Game', {
+            'fields': ('player', 'game_type', 'completed', 'is_correct')
+        }),
+        ('Scores', {
+            'fields': ('total_questions', 'correct_answers', 'total_time_seconds', 'score_percentage')
+        }),
+        ('Set Scores (Drag & Drop)', {
+            'fields': ('set_a_score', 'set_a_total', 'set_b_score', 'set_b_total'),
+            'classes': ('collapse',),
+        }),
+        ('Answers Data', {
+            'fields': ('formatted_answers_data',),
+            'classes': ('collapse',),
+        }),
+        ('Timestamps', {
+            'fields': ('started_at', 'completed_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def formatted_answers_data(self, obj):
+        import json
+        if obj.answers_data:
+            return json.dumps(obj.answers_data, indent=2)
+        return '-'
+    formatted_answers_data.short_description = 'Answers Data (JSON)'
 
 
 @admin.register(Challenge)

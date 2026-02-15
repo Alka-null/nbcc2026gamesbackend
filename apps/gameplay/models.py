@@ -99,6 +99,12 @@ class GameSession(models.Model):
     correct_answers = models.PositiveSmallIntegerField()
     total_time_seconds = models.FloatField(default=0.0)
     completed = models.BooleanField(default=False)
+    is_correct = models.BooleanField(null=True, blank=True, help_text="Overall result (e.g. jigsaw solved correctly)")
+    answers_data = models.JSONField(null=True, blank=True, help_text="Structured JSON of all answers/results")
+    set_a_score = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Set A correct answers (drag_drop)")
+    set_a_total = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Set A total questions (drag_drop)")
+    set_b_score = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Set B correct answers (drag_drop)")
+    set_b_total = models.PositiveSmallIntegerField(null=True, blank=True, help_text="Set B total questions (drag_drop)")
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
 

@@ -52,25 +52,59 @@ class SubmitGameAnswerAPIView(APIView):
 
 class SubmitBulkGameAnswersAPIView(APIView):
     """
-    Submit multiple game answers in bulk.
+    Submit game results with structured answer data.
 
     POST /api/gameplay/game-answers/bulk/
 
-    Expected payload:
+    For JIGSAW:
     {
         "player_code": "ABC123",
-        "game_type": "jigsaw" | "drag_drop",
-        "answers": [
-            {
-                "question_id": 1,
-                "question_text": "...",
-                "selected_answer": "...",
-                "correct_answer": "...",
-                "is_correct": true/false,
-                "time_taken_seconds": 0.0
+        "game_type": "jigsaw",
+        "answers_data": {
+            "puzzle_size": "4x4",
+            "total_pieces": 16,
+            "correct_pieces": 16,
+            "is_correct": true,
+            "time_taken_seconds": 45.0,
+            "status": "completed" | "timed_out"
+        },
+        "is_correct": true,
+        "time_taken_seconds": 45.0
+    }
+
+    For DRAG_DROP:
+    {
+        "player_code": "ABC123",
+        "game_type": "drag_drop",
+        "answers_data": {
+            "set_a": {
+                "pillars": {
+                    "Growth": ["stmt1", ...],
+                    "Productivity": ["stmt2", ...],
+                    "Future-Fit": ["stmt3", ...]
+                },
+                "results": [
+                    {"statement": "...", "selected_pillar": "Growth", "correct_pillar": "Growth", "is_correct": true},
+                    ...
+                ]
             },
-            ...
-        ]
+            "set_b": {
+                "pillars": {
+                    "Winning": ["stmt4", ...],
+                    "Delivering": ["stmt5", ...],
+                    "Transforming": ["stmt6", ...]
+                },
+                "results": [
+                    {"statement": "...", "selected_pillar": "Winning", "correct_pillar": "Winning", "is_correct": true},
+                    ...
+                ]
+            }
+        },
+        "set_a_score": 15,
+        "set_a_total": 30,
+        "set_b_score": 20,
+        "set_b_total": 30,
+        "time_taken_seconds": 180.0
     }
     """
 
@@ -78,7 +112,8 @@ class SubmitBulkGameAnswersAPIView(APIView):
         data = request.data
         player_code = data.get('player_code', '').strip().upper()
         game_type = data.get('game_type', '')
-        answers = data.get('answers', [])
+        answers_data = data.get('answers_data', {})
+        time_taken = float(data.get('time_taken_seconds', 0.0))
 
         if not player_code:
             return Response({'error': 'player_code is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -93,46 +128,89 @@ class SubmitBulkGameAnswersAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not answers or not isinstance(answers, list):
-            return Response({'error': 'answers list is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not answers_data:
+            return Response({'error': 'answers_data is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             player = Player.objects.get(unique_code=player_code, is_active=True)
         except Player.DoesNotExist:
             return Response({'error': 'Invalid player code'}, status=status.HTTP_404_NOT_FOUND)
 
-        created = []
-        for i, ans in enumerate(answers):
-            obj = GameAnswer.objects.create(
+        if game_type == 'jigsaw':
+            is_correct = data.get('is_correct', answers_data.get('is_correct', False))
+            total_pieces = answers_data.get('total_pieces', 16)
+            correct_pieces = answers_data.get('correct_pieces', 0)
+
+            session = GameSession.objects.create(
                 player=player,
                 game_type=game_type,
-                question_id=ans.get('question_id', i + 1),
-                question_text=ans.get('question_text', ''),
-                selected_answer=ans.get('selected_answer', ''),
-                correct_answer=ans.get('correct_answer', ''),
-                is_correct=ans.get('is_correct', False),
-                time_taken_seconds=ans.get('time_taken_seconds', 0.0),
+                total_questions=total_pieces,
+                correct_answers=correct_pieces,
+                total_time_seconds=time_taken,
+                completed=True,
+                is_correct=is_correct,
+                answers_data=answers_data,
+                completed_at=timezone.now(),
             )
-            created.append(obj.id)
 
-        # Also create/update a GameSession summary
-        correct_count = sum(1 for a in answers if a.get('is_correct', False))
-        total_time = sum(float(a.get('time_taken_seconds', 0)) for a in answers)
+            return Response({
+                'message': 'Jigsaw result saved',
+                'session_id': session.id,
+                'is_correct': is_correct,
+            }, status=status.HTTP_201_CREATED)
 
-        GameSession.objects.create(
-            player=player,
-            game_type=game_type,
-            total_questions=len(answers),
-            correct_answers=correct_count,
-            total_time_seconds=total_time,
-            completed=True,
-            completed_at=timezone.now(),
-        )
+        elif game_type == 'drag_drop':
+            set_a_score = data.get('set_a_score', 0)
+            set_a_total = data.get('set_a_total', 0)
+            set_b_score = data.get('set_b_score', 0)
+            set_b_total = data.get('set_b_total', 0)
+            total_correct = set_a_score + set_b_score
+            total_questions = set_a_total + set_b_total
 
-        return Response({
-            'message': f'{len(created)} answers saved',
-            'answer_ids': created,
-        }, status=status.HTTP_201_CREATED)
+            session = GameSession.objects.create(
+                player=player,
+                game_type=game_type,
+                total_questions=total_questions,
+                correct_answers=total_correct,
+                total_time_seconds=time_taken,
+                completed=True,
+                answers_data=answers_data,
+                set_a_score=set_a_score,
+                set_a_total=set_a_total,
+                set_b_score=set_b_score,
+                set_b_total=set_b_total,
+                completed_at=timezone.now(),
+            )
+
+            return Response({
+                'message': 'Drag & Drop results saved',
+                'session_id': session.id,
+                'set_a_score': set_a_score,
+                'set_a_total': set_a_total,
+                'set_b_score': set_b_score,
+                'set_b_total': set_b_total,
+            }, status=status.HTTP_201_CREATED)
+
+        else:
+            # Generic fallback for other game types
+            answers = data.get('answers', [])
+            correct_count = sum(1 for a in answers if a.get('is_correct', False))
+
+            session = GameSession.objects.create(
+                player=player,
+                game_type=game_type,
+                total_questions=len(answers) if answers else 0,
+                correct_answers=correct_count,
+                total_time_seconds=time_taken,
+                completed=True,
+                answers_data=answers_data or answers,
+                completed_at=timezone.now(),
+            )
+
+            return Response({
+                'message': 'Game results saved',
+                'session_id': session.id,
+            }, status=status.HTTP_201_CREATED)
 
 
 class SaveGameSessionAPIView(APIView):
